@@ -30,7 +30,7 @@ double z3d=0;
 double newx=0;
 double newy=0;
 double newz=0;
-Vector3d orintation = new Vector3d(0,0,1);
+Vector3d orintation = new Vector3d(0,1,0);
 TransformNR camFrame=null;
 boolean dragging=false;
 double depth =0;
@@ -53,8 +53,8 @@ map.put(MouseEvent.MOUSE_DRAGGED,  new EventHandler<MouseEvent>() {
 			starty=event.screenY;
 		}
 		dragging=true;
-		double deltx=startx-event.screenX;
-		double delty=-(starty-event.screenY)
+		double deltx=(startx-event.screenX);
+		double delty=(starty-event.screenY)
 		TransformNR trans=new TransformNR(deltx / depth,
 							delty / depth, 0, new RotationNR());
 						
