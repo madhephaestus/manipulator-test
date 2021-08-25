@@ -143,6 +143,13 @@ class BezierEditor{
 	CartesianManipulator cp2Manip;
 	HashMap<String, List<Double>> database;
 	boolean updating = false;
+	private String url;
+	private String gitfile;
+	public BezierEditor(String URL, String file, int numPoints) {
+		this(ScriptingEngine.fileFromGit("https://github.com/madhephaestus/manipulator-test.git", "bez.json"),numPoints)
+		url=URL
+		gitfile=file
+	}
 	public BezierEditor(File data, int numPoints) {
 		cachejson = data
 		String jsonString = null;
@@ -175,7 +182,6 @@ class BezierEditor{
 			parts.add(part)
 		}
 		update()
-		save()
 	}
 	public ArrayList<CSG> get(){
 		
@@ -203,7 +209,7 @@ class BezierEditor{
 		}
 		updating=false;
 	}
-	ArrayList<Transform> transforms (){
+	public ArrayList<Transform> transforms (){
 		return Extrude.bezierToTransforms(
 			new Vector3d(cp1Manip.manipulationMatrix.getTx(),cp1Manip.manipulationMatrix.getTy(),cp1Manip.manipulationMatrix.getTz()), // Control point one
 			new Vector3d(cp2Manip.manipulationMatrix.getTx(),cp2Manip.manipulationMatrix.getTy(),cp2Manip.manipulationMatrix.getTz()), // Control point two
@@ -232,22 +238,25 @@ class BezierEditor{
 		}
 		println "Saving to file "+cachejson.getName()
 		String writeOut = gson.toJson(database, TT_mapStringString);
-		OutputStream out = null;
-		try {
-			out = FileUtils.openOutputStream(cachejson, false);
-			IOUtils.write(writeOut, out);
-			out.close(); // don't swallow close Exception if copy
-			// completes
-			// normally
-		} finally {
-			IOUtils.closeQuietly(out);
+		if(url!=null) {
+			ScriptingEngine.pushCodeToGit(url, ScriptingEngine.getFullBranch(url), gitfile, writeOut, "Saving Bezier")
+		}else {
+			OutputStream out = null;
+			try {
+				out = FileUtils.openOutputStream(cachejson, false);
+				IOUtils.write(writeOut, out);
+				out.close(); // don't swallow close Exception if copy
+				// completes
+				// normally
+			} finally {
+				IOUtils.closeQuietly(out);
+			}
 		}
-
 	}
 }
 
 File	cachejson = ScriptingEngine.fileFromGit("https://github.com/madhephaestus/manipulator-test.git", "bez.json")
-BezierEditor editor = new BezierEditor(cachejson,10)
+BezierEditor editor = new BezierEditor("https://github.com/madhephaestus/manipulator-test.git", "bez.json",10)
 
 
 
