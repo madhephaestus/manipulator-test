@@ -271,9 +271,11 @@ class BezierEditor{
 		}
 	}
 }
+def URL="https://github.com/madhephaestus/manipulator-test.git"
+def file="bez.json"
 
-
-BezierEditor editor = new BezierEditor("https://github.com/madhephaestus/manipulator-test.git", "bez.json",10)
+BezierEditor editor = new BezierEditor(ScriptingEngine.fileFromGit(URL, file),10)
+//BezierEditor editor = new BezierEditor(URL, file,10)
 
 
 
