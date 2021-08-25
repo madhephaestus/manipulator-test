@@ -272,7 +272,7 @@ class BezierEditor{
 }
 
 File	cachejson = ScriptingEngine.fileFromGit("https://github.com/madhephaestus/manipulator-test.git", "bez.json")
-BezierEditor editor = new BezierEditor("https://github.com/madhephaestus/manipulator-test.git", "bez3.json",10)
+BezierEditor editor = new BezierEditor("https://github.com/madhephaestus/manipulator-test.git", "bez.json",10)
 
 
 
