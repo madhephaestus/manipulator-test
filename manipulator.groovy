@@ -26,7 +26,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 
 TransformNR p = new TransformNR()
-
+import eu.mihosoft.vrl.v3d.Transform
 
 def event = new Runnable() {
 	public void run() {
@@ -154,6 +154,7 @@ class BezierEditor{
 	CartesianManipulator endManip;
 	CartesianManipulator cp1Manip;
 	CartesianManipulator cp2Manip;
+	HashMap<String, List<Double>> database;
 	boolean updating = false;
 	public BezierEditor(File data, int numPoints) {
 		cachejson = data
@@ -161,7 +162,7 @@ class BezierEditor{
 		InputStream inPut = null;
 		inPut = FileUtils.openInputStream(cachejson);
 		jsonString = IOUtils.toString(inPut);
-		HashMap<String, List<Double>> database = gson.fromJson(jsonString, TT_mapStringString);
+		database = gson.fromJson(jsonString, TT_mapStringString);
 		
 		List<Double> cp1in = database.get("control one")
 		List<Double> cp2in = database.get("control two")
@@ -177,9 +178,9 @@ class BezierEditor{
 		cp2.setZ(cp2in.get(2))
 		
 		
-		endManip=new CartesianManipulator(end,{},{update()})
-		cp1Manip=new CartesianManipulator(cp1,{},{update()})
-		cp2Manip=new CartesianManipulator(cp2,{},{update()})
+		endManip=new CartesianManipulator(end,{save()},{update()})
+		cp1Manip=new CartesianManipulator(cp1,{save()},{update()})
+		cp2Manip=new CartesianManipulator(cp2,{save()},{update()})
 		
 		for(int i=0;i<numPoints;i++){
 			def part=displayPart.clone()
@@ -187,7 +188,7 @@ class BezierEditor{
 			parts.add(part)
 		}
 		update()
-		
+		save()
 	}
 	public ArrayList<CSG> get(){
 		
@@ -204,12 +205,7 @@ class BezierEditor{
 			return
 		}
 		updating=true;
-		ArrayList<eu.mihosoft.vrl.v3d.Transform> transforms = 	Extrude.bezierToTransforms(	
-			new Vector3d(cp1Manip.manipulationMatrix.getTx(),cp1Manip.manipulationMatrix.getTy(),cp1Manip.manipulationMatrix.getTz()), // Control point one
-			new Vector3d(cp2Manip.manipulationMatrix.getTx(),cp2Manip.manipulationMatrix.getTy(),cp2Manip.manipulationMatrix.getTz()), // Control point two
-			new Vector3d(endManip.manipulationMatrix.getTx(),endManip.manipulationMatrix.getTy(),endManip.manipulationMatrix.getTz()), // Endpoint
-			parts.size()// Iterations
-			)
+		ArrayList<Transform> transforms = transforms ()
 		for(int i=0;i<parts.size();i++) {
 			TransformNR nr=TransformFactory.csgToNR(transforms.get(i))
 			def partsGetGetManipulator = parts.get(i).getManipulator()
@@ -219,6 +215,46 @@ class BezierEditor{
 
 		}
 		updating=false;
+	}
+	ArrayList<Transform> transforms (){
+		return Extrude.bezierToTransforms(
+			new Vector3d(cp1Manip.manipulationMatrix.getTx(),cp1Manip.manipulationMatrix.getTy(),cp1Manip.manipulationMatrix.getTz()), // Control point one
+			new Vector3d(cp2Manip.manipulationMatrix.getTx(),cp2Manip.manipulationMatrix.getTy(),cp2Manip.manipulationMatrix.getTz()), // Control point two
+			new Vector3d(endManip.manipulationMatrix.getTx(),endManip.manipulationMatrix.getTy(),endManip.manipulationMatrix.getTz()), // Endpoint
+			parts.size()// Iterations
+			)
+	}
+	public void save() {
+		database.put("control one",[cp1Manip.manipulationMatrix.getTx(),cp1Manip.manipulationMatrix.getTy(),cp1Manip.manipulationMatrix.getTz()])
+		database.put("control two",[cp2Manip.manipulationMatrix.getTx(),cp2Manip.manipulationMatrix.getTy(),cp2Manip.manipulationMatrix.getTz()])
+		database.put("end point",[endManip.manipulationMatrix.getTx(),endManip.manipulationMatrix.getTy(),endManip.manipulationMatrix.getTz()])
+	
+		ArrayList<Transform> transforms = transforms ()
+		for(int i=0;i<parts.size();i++) {
+			TransformNR nr=TransformFactory.csgToNR(transforms.get(i))
+			def partsGetGetManipulator = parts.get(i).getManipulator()
+			Platform.runLater({
+				TransformFactory.nrToAffine(nr, partsGetGetManipulator)
+			})
+			String key="pose "+i
+			database.put(key,[nr.getX(),nr.getY(),nr.getZ(),
+				Math.toDegrees(nr.getRotation().getRotationAzimuth()),
+				Math.toDegrees(nr.getRotation().getRotationElevation()),
+				Math.toDegrees(nr.getRotation().getRotationTilt())])
+		}
+		println "Saving to file "+cachejson.getName()
+		String writeOut = gson.toJson(database, TT_mapStringString);
+		OutputStream out = null;
+		try {
+			out = FileUtils.openOutputStream(cachejson, false);
+			IOUtils.write(writeOut, out);
+			out.close(); // don't swallow close Exception if copy
+			// completes
+			// normally
+		} finally {
+			IOUtils.closeQuietly(out);
+		}
+
 	}
 }
 
