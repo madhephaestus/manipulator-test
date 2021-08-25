@@ -246,10 +246,10 @@ class BezierEditor{
 				TransformFactory.nrToAffine(nr, partsGetGetManipulator)
 			})
 			String key="pose "+i
-			database.put(key,[nr.getX(),nr.getY(),nr.getZ(),
-				Math.toDegrees(nr.getRotation().getRotationAzimuth()),
-				Math.toDegrees(nr.getRotation().getRotationElevation()),
-				Math.toDegrees(nr.getRotation().getRotationTilt())])
+			database.put(key,[nr.getX()/1000.0,nr.getY()/1000.0,nr.getZ()/1000.0,
+				(nr.getRotation().getRotationAzimuth()),
+				(nr.getRotation().getRotationElevation()),
+				(nr.getRotation().getRotationTilt())])
 		}
 		println "Saving to file "+cachejson.getAbsolutePath()
 		String writeOut = gson.toJson(database, TT_mapStringString);
