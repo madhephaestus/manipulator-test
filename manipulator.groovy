@@ -219,7 +219,6 @@ class BezierEditor{
 
 		}
 		updating=false;
-		println "Updating bezier"
 	}
 }
 
