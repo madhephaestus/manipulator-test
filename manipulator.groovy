@@ -97,7 +97,8 @@ class manipulation {
 					globalPose.setY(newy)
 					globalPose.setZ(newz)
 					event.consume()
-					eve.run()
+					new Thread({eve.run()}).start()
+					
 				}
 			}
 		})
