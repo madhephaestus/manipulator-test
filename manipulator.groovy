@@ -14,6 +14,15 @@ import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 import javafx.scene.paint.Color
 import javafx.scene.transform.Affine
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import com.neuronrobotics.bowlerstudio.scripting.ScriptingEngine
+
+import java.lang.reflect.Type;
+
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 
 TransformNR p = new TransformNR()
 Affine m= new Affine();
@@ -125,6 +134,26 @@ class CartesianManipulator{
 		return [manip1,manip2,manip3]
 	}
 }
+class BezierEditor{
+	Type TT_mapStringString = new TypeToken<HashMap<String, List<Double>>>() {}.getType();
+	Gson gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
+	File	cachejson;
+	public BezierEditor(File data) {
+		cachejson = data
+		String jsonString = null;
+		InputStream inPut = null;
+		inPut = FileUtils.openInputStream(cachejson);
+		jsonString = IOUtils.toString(inPut);
+		HashMap<String, List<Double>> database = gson.fromJson(jsonString, TT_mapStringString);
+		for(String key:database.keySet()) {
+			List<Double> value = database.get(key)
+			println key+" "+value
+		}
+	}
+}
+
+File	cachejson = ScriptingEngine.fileFromGit("https://github.com/madhephaestus/manipulator-test.git", "bez.json")
+BezierEditor editor = new BezierEditor(cachejson)
 
 
 def cart=new CartesianManipulator(m,p,event,eventMoving)
