@@ -216,7 +216,7 @@ class BezierEditor{
 		database.put("control one",[cp1Manip.manipulationMatrix.getTx(),cp1Manip.manipulationMatrix.getTy(),cp1Manip.manipulationMatrix.getTz()])
 		database.put("control two",[cp2Manip.manipulationMatrix.getTx(),cp2Manip.manipulationMatrix.getTy(),cp2Manip.manipulationMatrix.getTz()])
 		database.put("end point",[endManip.manipulationMatrix.getTx(),endManip.manipulationMatrix.getTy(),endManip.manipulationMatrix.getTz()])
-	
+		database.put("number of points",[parts.size()])
 		ArrayList<Transform> transforms = transforms ()
 		for(int i=0;i<parts.size();i++) {
 			TransformNR nr=TransformFactory.csgToNR(transforms.get(i))
