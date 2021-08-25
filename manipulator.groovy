@@ -146,30 +146,43 @@ class BezierEditor{
 	private String url;
 	private String gitfile;
 	public BezierEditor(String URL, String file, int numPoints) {
-		this(ScriptingEngine.fileFromGit("https://github.com/madhephaestus/manipulator-test.git", "bez.json"),numPoints)
+		this(ScriptingEngine.fileFromGit(URL, file),numPoints)
 		url=URL
 		gitfile=file
 	}
 	public BezierEditor(File data, int numPoints) {
 		cachejson = data
 		String jsonString = null;
-		InputStream inPut = null;
-		inPut = FileUtils.openInputStream(cachejson);
-		jsonString = IOUtils.toString(inPut);
-		database = gson.fromJson(jsonString, TT_mapStringString);
-		
-		List<Double> cp1in = database.get("control one")
-		List<Double> cp2in = database.get("control two")
-		List<Double> ep = database.get("end point")
-		end.setX(ep.get(0))
-		end.setY(ep.get(1))
-		end.setZ(ep.get(2))
-		cp1.setX(cp1in.get(0))
-		cp1.setY(cp1in.get(1))
-		cp1.setZ(cp1in.get(2))
-		cp2.setX(cp2in.get(0))
-		cp2.setY(cp2in.get(1))
-		cp2.setZ(cp2in.get(2))
+		if(cachejson.exists()) {
+			InputStream inPut = null;
+			inPut = FileUtils.openInputStream(cachejson);
+			jsonString = IOUtils.toString(inPut);
+			database = gson.fromJson(jsonString, TT_mapStringString);
+			
+			List<Double> cp1in = database.get("control one")
+			List<Double> cp2in = database.get("control two")
+			List<Double> ep = database.get("end point")
+			end.setX(ep.get(0))
+			end.setY(ep.get(1))
+			end.setZ(ep.get(2))
+			cp1.setX(cp1in.get(0))
+			cp1.setY(cp1in.get(1))
+			cp1.setZ(cp1in.get(2))
+			cp2.setX(cp2in.get(0))
+			cp2.setY(cp2in.get(1))
+			cp2.setZ(cp2in.get(2))
+		}else {
+			end.setX(100)
+			end.setY(100)
+			end.setZ(100)
+			cp1.setX(50)
+			cp1.setY(-50)
+			cp1.setZ(50)
+			cp2.setX(0)
+			cp2.setY(50)
+			cp2.setZ(-50)
+			database= new HashMap<String, List<Double>>()
+		}
 		
 		
 		endManip=new CartesianManipulator(end,{save()},{update()})
@@ -256,7 +269,7 @@ class BezierEditor{
 }
 
 File	cachejson = ScriptingEngine.fileFromGit("https://github.com/madhephaestus/manipulator-test.git", "bez.json")
-BezierEditor editor = new BezierEditor("https://github.com/madhephaestus/manipulator-test.git", "bez2.json",10)
+BezierEditor editor = new BezierEditor("https://github.com/madhephaestus/manipulator-test.git", "bez3.json",10)
 
 
 
