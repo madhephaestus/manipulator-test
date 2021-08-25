@@ -6,6 +6,7 @@ import com.neuronrobotics.sdk.common.Log
 
 import eu.mihosoft.vrl.v3d.CSG
 import eu.mihosoft.vrl.v3d.Cylinder
+import eu.mihosoft.vrl.v3d.Extrude
 import eu.mihosoft.vrl.v3d.Vector3d
 import javafx.application.Platform
 import javafx.event.EventHandler
@@ -25,7 +26,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 
 TransformNR p = new TransformNR()
-Affine m= new Affine();
+
 
 def event = new Runnable() {
 	public void run() {
@@ -51,6 +52,9 @@ class manipulation {
 	boolean dragging=false;
 	double depth =0;
 	public manipulation(Affine manipulationMatrix,Vector3d orintation,CSG manip,TransformNR globalPose,Runnable eve,Runnable moving) {
+		Platform.runLater({
+			TransformFactory.nrToAffine(globalPose, manipulationMatrix)
+		})
 		map.put(MouseEvent.MOUSE_PRESSED,  new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
@@ -117,6 +121,7 @@ class manipulation {
 }
 
 class CartesianManipulator{
+	public Affine manipulationMatrix= new Affine();
 	CSG manip1 = new Cylinder(0,5,40,10).toCSG()
 			.setColor(Color.BLUE)
 	CSG manip2 = new Cylinder(0,5,40,10).toCSG()
@@ -125,7 +130,7 @@ class CartesianManipulator{
 	CSG manip3 = new Cylinder(0,5,40,10).toCSG()
 		.rotx(90)
 		.setColor(Color.GREEN)
-	public CartesianManipulator(Affine manipulationMatrix,TransformNR globalPose,Runnable ev,Runnable moving) {
+	public CartesianManipulator(TransformNR globalPose,Runnable ev,Runnable moving) {
 		new manipulation( manipulationMatrix, new Vector3d(0,0,1), manip1, globalPose,ev,moving)
 		new manipulation( manipulationMatrix, new Vector3d(0,1,0), manip3, globalPose,ev,moving)
 		new manipulation( manipulationMatrix, new Vector3d(1,0,0), manip2, globalPose,ev,moving)
@@ -138,24 +143,90 @@ class BezierEditor{
 	Type TT_mapStringString = new TypeToken<HashMap<String, List<Double>>>() {}.getType();
 	Gson gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
 	File	cachejson;
-	public BezierEditor(File data) {
+	TransformNR end = new TransformNR()
+	TransformNR cp1 = new TransformNR()
+	TransformNR cp2 = new TransformNR()
+	ArrayList<CSG> parts = new ArrayList<CSG>()
+	CSG displayPart=new Cylinder(5,0,20,10).toCSG()
+							.toZMax()
+							.roty(-90)
+							
+	CartesianManipulator endManip;
+	CartesianManipulator cp1Manip;
+	CartesianManipulator cp2Manip;
+	boolean updating = false;
+	public BezierEditor(File data, int numPoints) {
 		cachejson = data
 		String jsonString = null;
 		InputStream inPut = null;
 		inPut = FileUtils.openInputStream(cachejson);
 		jsonString = IOUtils.toString(inPut);
 		HashMap<String, List<Double>> database = gson.fromJson(jsonString, TT_mapStringString);
-		for(String key:database.keySet()) {
-			List<Double> value = database.get(key)
-			println key+" "+value
+		
+		List<Double> cp1in = database.get("control one")
+		List<Double> cp2in = database.get("control two")
+		List<Double> ep = database.get("end point")
+		end.setX(ep.get(0))
+		end.setY(ep.get(1))
+		end.setZ(ep.get(2))
+		cp1.setX(cp1in.get(0))
+		cp1.setY(cp1in.get(1))
+		cp1.setZ(cp1in.get(2))
+		cp2.setX(cp2in.get(0))
+		cp2.setY(cp2in.get(1))
+		cp2.setZ(cp2in.get(2))
+		
+		
+		endManip=new CartesianManipulator(end,{},{update()})
+		cp1Manip=new CartesianManipulator(cp1,{},{update()})
+		cp2Manip=new CartesianManipulator(cp2,{},{update()})
+		
+		for(int i=0;i<numPoints;i++){
+			def part=displayPart.clone()
+			part.setManipulator(new Affine())
+			parts.add(part)
 		}
+		update()
+		
+	}
+	public ArrayList<CSG> get(){
+		
+		ArrayList<CSG> back= new ArrayList<CSG>()
+		back.addAll(endManip.get())
+		back.addAll(cp1Manip.get())
+		back.addAll(cp2Manip.get())
+		back.addAll(parts)
+		return back
+	}
+	
+	public void update() {
+		if(updating) {
+			return
+		}
+		updating=true;
+		ArrayList<eu.mihosoft.vrl.v3d.Transform> transforms = 	Extrude.bezierToTransforms(	
+			new Vector3d(cp1Manip.manipulationMatrix.getTx(),cp1Manip.manipulationMatrix.getTy(),cp1Manip.manipulationMatrix.getTz()), // Control point one
+			new Vector3d(cp2Manip.manipulationMatrix.getTx(),cp2Manip.manipulationMatrix.getTy(),cp2Manip.manipulationMatrix.getTz()), // Control point two
+			new Vector3d(endManip.manipulationMatrix.getTx(),endManip.manipulationMatrix.getTy(),endManip.manipulationMatrix.getTz()), // Endpoint
+			parts.size()// Iterations
+			)
+		for(int i=0;i<parts.size();i++) {
+			TransformNR nr=TransformFactory.csgToNR(transforms.get(i))
+			def partsGetGetManipulator = parts.get(i).getManipulator()
+			Platform.runLater({
+				TransformFactory.nrToAffine(nr, partsGetGetManipulator)
+			})
+
+		}
+		updating=false;
+		println "Updating bezier"
 	}
 }
 
 File	cachejson = ScriptingEngine.fileFromGit("https://github.com/madhephaestus/manipulator-test.git", "bez.json")
-BezierEditor editor = new BezierEditor(cachejson)
+BezierEditor editor = new BezierEditor(cachejson,10)
 
 
-def cart=new CartesianManipulator(m,p,event,eventMoving)
 
-return cart.get()
+
+return editor.get()
