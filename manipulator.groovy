@@ -25,21 +25,8 @@ import java.lang.reflect.Type;
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 
-TransformNR p = new TransformNR()
 import eu.mihosoft.vrl.v3d.Transform
 
-def event = new Runnable() {
-	public void run() {
-		Log.enableSystemPrint(true)
-		println "New pose found at "+p
-	}
-}
-def eventMoving = new Runnable() {
-	public void run() {
-		Log.enableSystemPrint(true)
-		println "Moving "
-	}
-}
 
 class manipulation {
 	HashMap<EventType<MouseEvent>,EventHandler<MouseEvent>> map=new HashMap<>()
