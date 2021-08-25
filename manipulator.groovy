@@ -251,7 +251,7 @@ class BezierEditor{
 				Math.toDegrees(nr.getRotation().getRotationElevation()),
 				Math.toDegrees(nr.getRotation().getRotationTilt())])
 		}
-		println "Saving to file "+cachejson.getName()
+		println "Saving to file "+cachejson.getAbsolutePath()
 		String writeOut = gson.toJson(database, TT_mapStringString);
 		if(url!=null) {
 			ScriptingEngine.pushCodeToGit(url, ScriptingEngine.getFullBranch(url), gitfile, writeOut, "Saving Bezier")
@@ -273,8 +273,11 @@ class BezierEditor{
 }
 def URL="https://github.com/madhephaestus/manipulator-test.git"
 def file="bez.json"
-
-BezierEditor editor = new BezierEditor(ScriptingEngine.fileFromGit(URL, file),10)
+//Temp file
+BezierEditor editor = new BezierEditor(new File(ScriptingEngine.getAppData().getAbsolutePath()+"/bez.json"),10)
+//Git stored file loaded but not saved
+//BezierEditor editor = new BezierEditor(ScriptingEngine.fileFromGit(URL, file),10)
+//Git file loaded and saved
 //BezierEditor editor = new BezierEditor(URL, file,10)
 
 
