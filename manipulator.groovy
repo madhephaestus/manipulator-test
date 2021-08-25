@@ -182,6 +182,7 @@ class BezierEditor{
 			cp2.setY(50)
 			cp2.setZ(-50)
 			database= new HashMap<String, List<Double>>()
+			
 		}
 		
 		
@@ -254,6 +255,8 @@ class BezierEditor{
 		if(url!=null) {
 			ScriptingEngine.pushCodeToGit(url, ScriptingEngine.getFullBranch(url), gitfile, writeOut, "Saving Bezier")
 		}else {
+			if(!cachejson.exists())
+				cachejson.createNewFile()
 			OutputStream out = null;
 			try {
 				out = FileUtils.openOutputStream(cachejson, false);
