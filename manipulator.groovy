@@ -205,6 +205,7 @@ class BezierEditor{
 			parts.add(part)
 		}
 		update()
+		save()
 	}
 	public ArrayList<CSG> get(){
 		
@@ -374,6 +375,7 @@ def file="bez.json"
 BezierEditor editor = new BezierEditor(
 	new File(ScriptingEngine.getAppData().getAbsolutePath()+"/bez2.json")
 	,5)
+	
 //Git stored file loaded but not saved
 //BezierEditor editor = new BezierEditor(ScriptingEngine.fileFromGit(URL, file),10)
 //Git file loaded and saved
