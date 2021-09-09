@@ -349,24 +349,27 @@ class BezierEditor{
 		}
 		msgesData.put("trajectory_points", trajectory_points)
 		database.put("halodi_msgs::msg::dds_::WholeBodyTrajectory_", msgesData)
-		println "Saving to file "+cachejson.getAbsolutePath()
-		String writeOut = gson.toJson(database, TT_mapStringString);
-		if(url!=null) {
-			ScriptingEngine.pushCodeToGit(url, ScriptingEngine.getFullBranch(url), gitfile, writeOut, "Saving Bezier")
-		}else {
-			if(!cachejson.exists())
-				cachejson.createNewFile()
-			OutputStream out = null;
-			try {
-				out = FileUtils.openOutputStream(cachejson, false);
-				IOUtils.write(writeOut, out);
-				out.close(); // don't swallow close Exception if copy
-				// completes
-				// normally
-			} finally {
-				IOUtils.closeQuietly(out);
+		new Thread({
+			println "Saving to file "+cachejson.getAbsolutePath()
+			String writeOut = gson.toJson(database, TT_mapStringString);
+			if(url!=null) {
+				ScriptingEngine.pushCodeToGit(url, ScriptingEngine.getFullBranch(url), gitfile, writeOut, "Saving Bezier")
+			}else {
+				if(!cachejson.exists())
+					cachejson.createNewFile()
+				OutputStream out = null;
+				try {
+					out = FileUtils.openOutputStream(cachejson, false);
+					IOUtils.write(writeOut, out);
+					out.close(); // don't swallow close Exception if copy
+					// completes
+					// normally
+				} finally {
+					IOUtils.closeQuietly(out);
+				}
 			}
-		}
+		}).start()
+
 	}
 }
 def URL="https://github.com/madhephaestus/manipulator-test.git"
