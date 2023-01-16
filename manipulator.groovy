@@ -7,7 +7,6 @@ import com.neuronrobotics.sdk.common.Log
 import eu.mihosoft.vrl.v3d.CSG
 import eu.mihosoft.vrl.v3d.Cylinder
 import eu.mihosoft.vrl.v3d.Extrude
-import eu.mihosoft.vrl.v3d.Vector3d
 import javafx.application.Platform
 import javafx.event.EventHandler
 import javafx.event.EventType
@@ -59,32 +58,36 @@ class manipulation {
 		map.put(MouseEvent.MOUSE_DRAGGED,  new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
-				if(dragging==false) {
-					startx=event.screenX;
-					starty=event.screenY;
-				}
-				dragging=true;
-				double deltx=(startx-event.screenX);
-				double delty=(starty-event.screenY)
-				TransformNR trans=new TransformNR(deltx / depth,
+						BowlerStudio.runLater({
+							if(dragging==false) {
+								startx=event.screenX;
+								starty=event.screenY;
+							}
+							dragging=true;
+							double deltx=(startx-event.screenX);
+							double delty=(starty-event.screenY)
+							TransformNR trans=new TransformNR(deltx / depth,
 									delty / depth, 0, new RotationNR());
-								
-				TransformNR global = camFrame.times(trans);
-				newx=(global.getX()*orintation.getX()+globalPose.getX());
-				newy=(global.getY()*orintation.getY()+globalPose.getY());
-				newz=(global.getZ()*orintation.getZ()+globalPose.getZ());
-				global.setX(newx)
-				global.setY(newy)
-				global.setZ(newz)
+
+							TransformNR global = camFrame.times(trans);
+							newx=(global.getX()*orintation.getX()+globalPose.getX());
+							newy=(global.getY()*orintation.getY()+globalPose.getY());
+							newz=(global.getZ()*orintation.getZ()+globalPose.getZ());
+							global.setX(newx)
+							global.setY(newy)
+							global.setZ(newz)
+
+							global.setRotation(new RotationNR())
+							BowlerStudio.runLater({
+								TransformFactory.nrToAffine(global, manipulationMatrix)
+							})
+							double dist = Math.sqrt(Math.pow(deltx, 2)+Math.pow(delty, 2))
+							System.out.println(" drag "+global.getX()+" , "+global.getY()+" , "+global.getZ()+" "+deltx+" "+delty);
+							moving.run()
+
+							event.consume()
+						})
 				
-				global.setRotation(new RotationNR())
-				Platform.runLater({
-					TransformFactory.nrToAffine(global, manipulationMatrix)
-				})
-				double dist = Math.sqrt(Math.pow(deltx, 2)+Math.pow(delty, 2))
-				//System.out.println(" drag "+global.getX()+" , "+global.getY()+" , "+global.getZ()+" "+deltx+" "+delty);
-				moving.run()
-				event.consume()
 			}
 		})
 		
