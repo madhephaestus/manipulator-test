@@ -24,7 +24,7 @@ import java.lang.reflect.Type;
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 
-import eu.mihosoft.vrl.v3d.Transform
+import eu.mihosoft.vrl.v3d.*
 
 
 class manipulation {
@@ -42,22 +42,20 @@ class manipulation {
 			TransformFactory.nrToAffine(globalPose, manipulationMatrix)
 		})
 		map.put(MouseEvent.MOUSE_PRESSED,  new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
-				new Thread({
-					camFrame= BowlerStudio.getCamerFrame()
-					depth=-1600 /BowlerStudio.getCamerDepth()
-					event.consume()
-					dragging=false;
-					
-				}).start();
-
-			}
-		})
+					@Override
+					public void handle(MouseEvent event) {
+						new Thread({
+							camFrame= BowlerStudio.getCamerFrame()
+							depth=-1600 /BowlerStudio.getCamerDepth()
+							event.consume()
+							dragging=false;
+						}).start();
+					}
+				})
 
 		map.put(MouseEvent.MOUSE_DRAGGED,  new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
+					@Override
+					public void handle(MouseEvent event) {
 						BowlerStudio.runLater({
 							if(dragging==false) {
 								startx=event.screenX;
@@ -70,9 +68,9 @@ class manipulation {
 									delty / depth, 0, new RotationNR());
 
 							TransformNR global = camFrame.times(trans);
-							newx=(global.getX()*orintation.getX()+globalPose.getX());
-							newy=(global.getY()*orintation.getY()+globalPose.getY());
-							newz=(global.getZ()*orintation.getZ()+globalPose.getZ());
+							newx=(global.getX()*orintation.x+globalPose.getX());
+							newy=(global.getY()*orintation.y+globalPose.getY());
+							newz=(global.getZ()*orintation.z+globalPose.getZ());
 							global.setX(newx)
 							global.setY(newy)
 							global.setZ(newz)
@@ -82,52 +80,48 @@ class manipulation {
 								TransformFactory.nrToAffine(global, manipulationMatrix)
 							})
 							double dist = Math.sqrt(Math.pow(deltx, 2)+Math.pow(delty, 2))
-							System.out.println(" drag "+global.getX()+" , "+global.getY()+" , "+global.getZ()+" "+deltx+" "+delty);
+							//System.out.println(" drag "+global.getX()+" , "+global.getY()+" , "+global.getZ()+" "+deltx+" "+delty);
 							moving.run()
-
-							event.consume()
 						})
-				
-			}
-		})
-		
+						event.consume()
+					}
+				})
+
 		map.put(MouseEvent.MOUSE_RELEASED,  new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
-				if(dragging) {
-					dragging=false;
-					globalPose.setX(newx)
-					globalPose.setY(newy)
-					globalPose.setZ(newz)
-					event.consume()
-					new Thread({eve.run()}).start()
-					
-				}
-			}
-		})
+					@Override
+					public void handle(MouseEvent event) {
+						if(dragging) {
+							dragging=false;
+							globalPose.setX(newx)
+							globalPose.setY(newy)
+							globalPose.setZ(newz)
+							event.consume()
+							new Thread({eve.run()}).start()
+						}
+					}
+				})
 		manip.getStorage().set("manipulator",map)
 		manip.setManipulator(manipulationMatrix)
 	}
-	
 }
 
 class CartesianManipulator{
 	public Affine manipulationMatrix= new Affine();
 	CSG manip1 = new Cylinder(0,5,40,10).toCSG()
-			.setColor(Color.BLUE)
+	.setColor(Color.BLUE)
 	CSG manip2 = new Cylinder(0,5,40,10).toCSG()
-		.roty(-90)
-		.setColor(Color.RED)
+	.roty(-90)
+	.setColor(Color.RED)
 	CSG manip3 = new Cylinder(0,5,40,10).toCSG()
-		.rotx(90)
-		.setColor(Color.GREEN)
+	.rotx(90)
+	.setColor(Color.GREEN)
 	public CartesianManipulator(TransformNR globalPose,Runnable ev,Runnable moving) {
 		new manipulation( manipulationMatrix, new Vector3d(0,0,1), manip1, globalPose,ev,moving)
 		new manipulation( manipulationMatrix, new Vector3d(0,1,0), manip3, globalPose,ev,moving)
 		new manipulation( manipulationMatrix, new Vector3d(1,0,0), manip2, globalPose,ev,moving)
 	}
 	public ArrayList<CSG> get(){
-		return [manip1,manip2,manip3]
+		return [manip1, manip2, manip3]
 	}
 }
 class BezierEditor{
@@ -139,9 +133,9 @@ class BezierEditor{
 	TransformNR cp2 = new TransformNR()
 	ArrayList<CSG> parts = new ArrayList<CSG>()
 	CSG displayPart=new Cylinder(5,0,20,10).toCSG()
-							.toZMax()
-							.roty(-90)
-							
+	.toZMax()
+	.roty(-90)
+
 	CartesianManipulator endManip;
 	CartesianManipulator cp1Manip;
 	CartesianManipulator cp2Manip;
@@ -159,30 +153,30 @@ class BezierEditor{
 		String jsonString = null;
 		boolean loaded=false;
 		try {
-		if(cachejson.exists()) {
-			InputStream inPut = null;
-			inPut = FileUtils.openInputStream(cachejson);
-			jsonString = IOUtils.toString(inPut);
-			database = gson.fromJson(jsonString, TT_mapStringString);
-			
-			List<Double> cp1in = (List<Double>)database.get("bezier").get("control one")
-			List<Double> cp2in = (List<Double>)database.get("bezier").get("control two")
-			List<Double> ep = (List<Double>)database.get("bezier").get("end point")
-			end.setX(ep.get(0))
-			end.setY(ep.get(1))
-			end.setZ(ep.get(2))
-			cp1.setX(cp1in.get(0))
-			cp1.setY(cp1in.get(1))
-			cp1.setZ(cp1in.get(2))
-			cp2.setX(cp2in.get(0))
-			cp2.setY(cp2in.get(1))
-			cp2.setZ(cp2in.get(2))
-			loaded=true;
-		}
+			if(cachejson.exists()) {
+				InputStream inPut = null;
+				inPut = FileUtils.openInputStream(cachejson);
+				jsonString = IOUtils.toString(inPut);
+				database = gson.fromJson(jsonString, TT_mapStringString);
+
+				List<Double> cp1in = (List<Double>)database.get("bezier").get("control one")
+				List<Double> cp2in = (List<Double>)database.get("bezier").get("control two")
+				List<Double> ep = (List<Double>)database.get("bezier").get("end point")
+				end.setX(ep.get(0))
+				end.setY(ep.get(1))
+				end.setZ(ep.get(2))
+				cp1.setX(cp1in.get(0))
+				cp1.setY(cp1in.get(1))
+				cp1.setZ(cp1in.get(2))
+				cp2.setX(cp2in.get(0))
+				cp2.setY(cp2in.get(1))
+				cp2.setZ(cp2in.get(2))
+				loaded=true;
+			}
 		}catch(Throwable t) {
 			t.printStackTrace();
 		}
-		
+
 		if(!loaded) {
 			end.setX(100)
 			end.setY(100)
@@ -194,14 +188,13 @@ class BezierEditor{
 			cp2.setY(50)
 			cp2.setZ(-50)
 			database= new HashMap<String, HashMap<String,Object>>()
-			
 		}
-		
-		
+
+
 		endManip=new CartesianManipulator(end,{save()},{update()})
 		cp1Manip=new CartesianManipulator(cp1,{save()},{update()})
 		cp2Manip=new CartesianManipulator(cp2,{save()},{update()})
-		
+
 		for(int i=0;i<numPoints;i++){
 			def part=displayPart.clone()
 			part.setManipulator(new Affine())
@@ -211,7 +204,7 @@ class BezierEditor{
 		save()
 	}
 	public ArrayList<CSG> get(){
-		
+
 		ArrayList<CSG> back= new ArrayList<CSG>()
 		back.addAll(endManip.get())
 		back.addAll(cp1Manip.get())
@@ -219,7 +212,7 @@ class BezierEditor{
 		back.addAll(parts)
 		return back
 	}
-	
+
 	public void update() {
 		if(updating) {
 			return
@@ -232,25 +225,36 @@ class BezierEditor{
 			Platform.runLater({
 				TransformFactory.nrToAffine(nr, partsGetGetManipulator)
 			})
-
 		}
 		updating=false;
 	}
 	public ArrayList<Transform> transforms (){
 		return Extrude.bezierToTransforms(
-			new Vector3d(cp1Manip.manipulationMatrix.getTx(),cp1Manip.manipulationMatrix.getTy(),cp1Manip.manipulationMatrix.getTz()), // Control point one
-			new Vector3d(cp2Manip.manipulationMatrix.getTx(),cp2Manip.manipulationMatrix.getTy(),cp2Manip.manipulationMatrix.getTz()), // Control point two
-			new Vector3d(endManip.manipulationMatrix.getTx(),endManip.manipulationMatrix.getTy(),endManip.manipulationMatrix.getTz()), // Endpoint
-			parts.size()// Iterations
-			)
+				new Vector3d(cp1Manip.manipulationMatrix.getTx(),cp1Manip.manipulationMatrix.getTy(),cp1Manip.manipulationMatrix.getTz()), // Control point one
+				new Vector3d(cp2Manip.manipulationMatrix.getTx(),cp2Manip.manipulationMatrix.getTy(),cp2Manip.manipulationMatrix.getTz()), // Control point two
+				new Vector3d(endManip.manipulationMatrix.getTx(),endManip.manipulationMatrix.getTy(),endManip.manipulationMatrix.getTz()), // Endpoint
+				parts.size()// Iterations
+				)
 	}
 	public void save() {
 		database.clear()
 		HashMap<String,List<Double>> bezData=new HashMap<>();
-		
-		bezData.put("control one",[cp1Manip.manipulationMatrix.getTx(),cp1Manip.manipulationMatrix.getTy(),cp1Manip.manipulationMatrix.getTz()])
-		bezData.put("control two",[cp2Manip.manipulationMatrix.getTx(),cp2Manip.manipulationMatrix.getTy(),cp2Manip.manipulationMatrix.getTz()])
-		bezData.put("end point",[endManip.manipulationMatrix.getTx(),endManip.manipulationMatrix.getTy(),endManip.manipulationMatrix.getTz()])
+
+		bezData.put("control one",[
+			cp1Manip.manipulationMatrix.getTx(),
+			cp1Manip.manipulationMatrix.getTy(),
+			cp1Manip.manipulationMatrix.getTz()
+		])
+		bezData.put("control two",[
+			cp2Manip.manipulationMatrix.getTx(),
+			cp2Manip.manipulationMatrix.getTy(),
+			cp2Manip.manipulationMatrix.getTz()
+		])
+		bezData.put("end point",[
+			endManip.manipulationMatrix.getTx(),
+			endManip.manipulationMatrix.getTy(),
+			endManip.manipulationMatrix.getTz()
+		])
 		bezData.put("number of points",[parts.size()])
 		database.put("bezier",bezData)
 		HashMap<String,Object> msgesData=new HashMap<>();
@@ -281,18 +285,18 @@ class BezierEditor{
 		HashMap<String,Object> interpolation_modeData=new HashMap<>();
 		interpolation_modeData.put("value",1)
 		msgesData.put("interpolation_mode", interpolation_modeData)
-		
+
 		ArrayList<HashMap<String,Object>>trajectory_points = []
-		
+
 		ArrayList<Transform> transforms = transforms ()
 		for(int i=0;i<parts.size();i++) {
 			TransformNR nr=TransformFactory.csgToNR(transforms.get(i))
 			HashMap<String,Object> pointElement = new HashMap<String,Object>()
 			HashMap<String,Object> time_from_start = new HashMap<String,Object>()
 			ArrayList<HashMap<String,Object>> task_space_commands = new ArrayList<HashMap<String,Object>> ()
-			pointElement.put("joint_space_commands",[ ])
-			pointElement.put("contact_point_commands",[ ])
-			pointElement.put("icp_offset_command",[ ])
+			pointElement.put("joint_space_commands",[])
+			pointElement.put("contact_point_commands",[])
+			pointElement.put("icp_offset_command",[])
 			time_from_start.put("sec", i+1)
 			time_from_start.put("nanosec", 0)
 			pointElement.put("time_from_start", time_from_start)
@@ -310,7 +314,7 @@ class BezierEditor{
 			posePosition.put("x", nr.getX()/1000.0)
 			posePosition.put("y", nr.getY()/1000.0)
 			posePosition.put("z", nr.getZ()/1000.0)
-			
+
 			poseOrentation.put("x", nr.getRotation().getRotationMatrix2QuaturnionX())
 			poseOrentation.put("y", nr.getRotation().getRotationMatrix2QuaturnionY())
 			poseOrentation.put("z", nr.getRotation().getRotationMatrix2QuaturnionZ())
@@ -342,10 +346,10 @@ class BezierEditor{
 			task_space_commandsElement.put("orientation_feedback_parameters", [])
 			task_space_commandsElement.put("position_feedback_parameters", [])
 			task_space_commandsElement.put("nullspace_command", [])
-//			database.put(key,[nr.getX()/1000.0,nr.getY()/1000.0,nr.getZ()/1000.0,
-//				(nr.getRotation().getRotationAzimuth()),
-//				(nr.getRotation().getRotationElevation()),
-//				(nr.getRotation().getRotationTilt())])
+			//			database.put(key,[nr.getX()/1000.0,nr.getY()/1000.0,nr.getZ()/1000.0,
+			//				(nr.getRotation().getRotationAzimuth()),
+			//				(nr.getRotation().getRotationElevation()),
+			//				(nr.getRotation().getRotationTilt())])
 			task_space_commands.add(task_space_commandsElement)
 			pointElement.put("task_space_commands", task_space_commands)
 			trajectory_points.add(pointElement)
@@ -372,16 +376,15 @@ class BezierEditor{
 				}
 			}
 		}).start()
-
 	}
 }
 def URL="https://github.com/madhephaestus/manipulator-test.git"
 def file="bez.json"
 //Temp file
 BezierEditor editor = new BezierEditor(
-	new File(ScriptingEngine.getAppData().getAbsolutePath()+"/bez2.json")
-	,5)
-	
+		new File(ScriptingEngine.getAppData().getAbsolutePath()+"/bez2.json")
+		,20)
+
 //Git stored file loaded but not saved
 //BezierEditor editor = new BezierEditor(ScriptingEngine.fileFromGit(URL, file),10)
 //Git file loaded and saved
