@@ -337,7 +337,7 @@ def file="bez.json"
 //		,20)
 
 //Git stored file loaded but not saved
-BezierEditor editor = new BezierEditor(ScriptingEngine.fileFromGit(URL, file),10)
+BezierEditor editor = new BezierEditor(ScriptingEngine.fileFromGit(URL, file),20)
 //Git file loaded and saved
 //BezierEditor editor = new BezierEditor(URL, file,10)
 
